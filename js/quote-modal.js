@@ -138,30 +138,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 emailBody += '\nNote: Files cannot be attached directly through this form. Please attach them manually in your email client.';
             }
 
-            // Open default email client
-            const subject = `Quote Request - ${formObject.serviceType}`;
-            const mailtoLink = `mailto:radu.tonu@yahoo.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+            // Initialize EmailJS with your Public Key
+            (function() {
+                emailjs.init('ej7NeHS5Z0ZpEyyv0');
+            })();
+
+            // Send email using EmailJS
+            emailjs.send('service_rj4dm3a', 'template_9qd9dwd', {
+                name: formObject.name,
+                email: formObject.email,
+                phone: formObject.phone,
+                address: formObject.address || 'Not specified',
+                serviceType: document.querySelector('#serviceType option:checked').text,
+                projectType: document.querySelector('#projectType option:checked').text,
+                projectSize: formObject.projectSize || 'Not specified',
+                timeline: formObject.timeline ? document.querySelector('#timeline option:checked').text : 'Not specified',
+                startDate: formObject.startDate ? document.querySelector('#startDate option:checked').text : 'Not specified',
+                message: formObject.message
+            })
+            .then(function(response) {
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'success-message';
+                successMessage.textContent = 'Thank you for your quote request! We will contact you soon with a personalized offer.';
+                document.body.appendChild(successMessage);
+                
+                // Remove success message after 5 seconds
+                setTimeout(() => {
+                    successMessage.remove();
+                }, 5000);
+            }, function(error) {
+                // Show error message
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = 'There was an error sending your request. Please try again or contact us directly at radu.tonu@yahoo.com';
+                document.body.appendChild(errorMessage);
+                
+                // Remove error message after 5 seconds
+                setTimeout(() => {
+                    errorMessage.remove();
+                }, 5000);
+            });
             
-            // Show success message and reset form
-            const successMessage = document.createElement('div');
-            successMessage.className = 'success-message';
-            successMessage.textContent = 'Thank you for your request! Your message has been sent successfully.';
-            document.body.appendChild(successMessage);
-            
-            // Remove success message after 5 seconds
-            setTimeout(() => {
-                successMessage.remove();
-            }, 5000);
-            
+            // Reset form and close modal
             quoteForm.reset();
             if (fileInfo) fileInfo.textContent = '';
             selectedFiles = [];
-            
-            // Open email client
-            window.location.href = mailtoLink;
-            
-            // Close modal after a short delay
-            setTimeout(closeModal, 500);
+            closeModal();
         });
     }
 });

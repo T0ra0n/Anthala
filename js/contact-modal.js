@@ -129,27 +129,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 body += `Please attach the file manually in your email client.`;
             }
 
-            // Send email using mailto (client-side only solution)
-            const email = 'radu.tonu@yahoo.com';
-            const subject = formObject.subject || 'New message from website';
-            
-            window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${body}`;
-            
-            // Show success message
-            const successMessage = document.createElement('div');
-            successMessage.className = 'success-message';
-            successMessage.textContent = 'Thank you for your message! Your email client has opened with a pre-filled message. Please send it to contact us.';
-            
-            if (selectedFile) {
-                successMessage.textContent += '\n\nPlease remember to attach your file in the email client.';
-            }
-            
-            document.body.appendChild(successMessage);
-            
-            // Remove success message after 5 seconds
-            setTimeout(() => {
-                successMessage.remove();
-            }, 5000);
+            // Initialize EmailJS with your Public Key
+            (function() {
+                emailjs.init('ej7NeHS5Z0ZpEyyv0');
+            })();
+
+            // Send email using EmailJS
+            emailjs.send('service_rj4dm3a', 'template_xrirird', {
+                name: formObject.name,
+                email: formObject.email,
+                subject: formObject.subject || 'New message from website',
+                message: formObject.message
+            })
+            .then(function(response) {
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'success-message';
+                successMessage.textContent = 'Thank you for your message! We will get back to you soon.';
+                document.body.appendChild(successMessage);
+                
+                // Remove success message after 5 seconds
+                setTimeout(() => {
+                    successMessage.remove();
+                }, 5000);
+            }, function(error) {
+                // Show error message
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = 'There was an error sending your message. Please try again or contact us directly at radu.tonu@yahoo.com';
+                document.body.appendChild(errorMessage);
+                
+                // Remove error message after 5 seconds
+                setTimeout(() => {
+                    errorMessage.remove();
+                }, 5000);
+            });
             
             // Reset form and close modal
             contactForm.reset();
