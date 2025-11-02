@@ -1,0 +1,5 @@
+# Deny access to all files in uploads directory
+<Files *>
+  Order Deny,Allow
+  Deny from all
+</Files>

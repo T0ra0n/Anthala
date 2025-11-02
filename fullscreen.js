@@ -80,7 +80,6 @@ function hideMobileElements() {
         mobileFooter.style.zIndex = '-1';
     }
 
-    console.log('Header și footer ascunse manual pe mobil');
 }
 
 // Funcție pentru restaurarea header-ului și footer-ului pe mobil
@@ -116,14 +115,13 @@ function showMobileElements() {
         mobileFooter.style.zIndex = '';
     }
 
-    console.log('Header și footer restaurate pe mobil');
 }
 
 // Funcția principală de toggle fullscreen pentru carusel
 function toggleFullscreen() {
     const carouselWrapper = document.querySelector('.carousel-wrapper');
     if (!carouselWrapper) {
-        console.error('Elementul .carousel-wrapper nu a fost găsit');
+        return;
         return;
     }
 
@@ -137,7 +135,6 @@ function toggleFullscreen() {
         carouselWrapper.classList.contains('carousel-fullscreen')
     );
 
-    console.log('Fullscreen state:', isCurrentlyFullscreen);
 
     if (isCurrentlyFullscreen) {
         // Ieșim din fullscreen
@@ -151,7 +148,6 @@ function toggleFullscreen() {
             }
 
             updateOverlayVisibility(false); // Restaurăm overlay-ul
-            console.log('Ieșit din fullscreen CSS');
         } else {
             exitFullscreen().catch(console.error);
         }
@@ -177,7 +173,6 @@ function toggleFullscreen() {
                     }
 
                     updateOverlayVisibility(true);
-                    console.log('Fullscreen CSS activat pe iOS');
                 });
             } else {
                 // Direct CSS dacă nu avem nicio metodă API
@@ -190,7 +185,6 @@ function toggleFullscreen() {
                 }
 
                 updateOverlayVisibility(true);
-                console.log('Fullscreen CSS activat pe iOS (fallback)');
             }
         } else {
             // Pe alte browsere folosim API-ul standard
@@ -205,7 +199,6 @@ function toggleFullscreen() {
                 }
 
                 updateOverlayVisibility(true);
-                console.log('Fullscreen CSS activat (fallback)');
             });
         }
     }
@@ -285,8 +278,7 @@ function handleFullscreenChange() {
             mobileFooter.style.zIndex = '-1';
         }
 
-        console.log('Header și footer ascunse manual pe mobil');
-    }
+        }
 
     // Gestionăm overlay-ul și clasa body în funcție de stare
     updateOverlayVisibility(isFullscreen);
@@ -329,11 +321,9 @@ function handleFullscreenChange() {
                 mobileFooter.style.zIndex = '';
             }
 
-            console.log('Header și footer restaurate pe mobil');
-        }
+                }
     }
 
-    console.log('Fullscreen schimbat:', isFullscreen);
 }
 
 // Stilurile CSS pentru fullscreen (mai eficiente)

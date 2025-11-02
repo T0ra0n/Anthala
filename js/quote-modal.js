@@ -13,6 +13,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(overlay);
     }
 
+    // Notification display function
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+
     // Open modal function
     function openModal() {
         document.body.style.overflow = 'hidden';
@@ -56,135 +70,126 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // File input handling
+    // File input handling for quote form
     const fileInput = document.getElementById('quoteFiles');
     const fileInfo = document.querySelector('#quoteModal .file-info');
     let selectedFiles = [];
     const maxTotalSize = 10 * 1024 * 1024; // 10MB in bytes
+    const allowedFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 
+                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                             'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                             'text/plain'];
 
     if (fileInput) {
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             let totalSize = 0;
             
-            // Calculate total size of all files
-            files.forEach(file => {
-                totalSize += file.size;
-            });
+            // Reset previous selection
+            selectedFiles = [];
             
-            if (totalSize > maxTotalSize) {
-                alert('Total file size exceeds 10MB. Please select fewer files or reduce their size.');
-                fileInput.value = '';
-                fileInfo.textContent = '';
-                selectedFiles = [];
-                return;
+            // Validate files
+            for (const file of files) {
+                // Check file type
+                if (!allowedFileTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|pdf|doc|docx|xls|xlsx|txt)$/i)) {
+                    showNotification(`File type not allowed: ${file.name}. Allowed types: JPG, PNG, PDF, DOC, DOCX, XLS, XLSX, TXT`, 'error');
+                    fileInput.value = '';
+                    fileInfo.textContent = '';
+                    return;
+                }
+                
+                // Check file size
+                totalSize += file.size;
+                
+                if (totalSize > maxTotalSize) {
+                    showNotification('Total file size exceeds 10MB. Please select fewer files or reduce their size.', 'error');
+                    fileInput.value = '';
+                    fileInfo.textContent = '';
+                    return;
+                }
+                
+                selectedFiles.push(file);
             }
             
-            selectedFiles = files;
-            
-            if (files.length > 0) {
-                const fileNames = files.map(file => file.name).join(', ');
+            // Update file info display
+            if (selectedFiles.length > 0) {
+                const fileNames = selectedFiles.map(file => file.name).join(', ');
                 const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
-                fileInfo.textContent = `${files.length} files selected (${totalSizeMB} MB): ${fileNames}`;
+                fileInfo.textContent = `${selectedFiles.length} files selected (${totalSizeMB} MB): ${fileNames}`;
             } else {
-                fileInfo.textContent = '';
+                fileInfo.textContent = 'No file selected';
             }
         });
     }
 
     // Form submission
     if (quoteForm) {
-        quoteForm.addEventListener('submit', function(e) {
+        quoteForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Get form data
             const formData = new FormData(quoteForm);
-            const formObject = {};
-            formData.forEach((value, key) => {
-                formObject[key] = value;
-            });
-
+            const submitBtn = quoteForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
             // Validate required fields
-            const requiredFields = ['serviceType', 'projectType', 'name', 'email', 'phone', 'message'];
-            const missingFields = requiredFields.filter(field => !formObject[field]);
+            const requiredFields = ['service', 'name', 'email', 'phone', 'message'];
+            const missingFields = [];
+            
+            requiredFields.forEach(field => {
+                if (!formData.get(field)) {
+                    missingFields.push(field);
+                }
+            });
             
             if (missingFields.length > 0) {
-                alert('Please fill in all required fields (marked with *).');
+                showNotification('Please fill in all required fields (marked with *).', 'error');
                 return;
             }
 
             // Validate email format
             const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-            if (!emailRegex.test(formObject.email)) {
-                alert('Please enter a valid email address.');
+            if (!emailRegex.test(formData.get('email'))) {
+                showNotification('Please enter a valid email address.', 'error');
                 return;
             }
 
-            // Prepare email content
-            let emailBody = `Nume: ${formObject.name}\n`;
-            emailBody += `Email: ${formObject.email}\n`;
-            emailBody += `Telefon: ${formObject.phone || 'Nespecificat'}\n`;
-            emailBody += `Adresă proiect: ${formObject.address || 'Nespecificat'}\n`;
-            emailBody += `\n--- Detalii proiect ---\n`;
-            emailBody += `Tip serviciu: ${document.querySelector('#serviceType option:checked').text}\n`;
-            emailBody += `Tip proiect: ${document.querySelector('#projectType option:checked').text}\n`;
-            
-            // Add file info if any
-            if (selectedFiles.length > 0) {
-                emailBody += `Attached files (${selectedFiles.length}):\n`;
-                selectedFiles.forEach((file, index) => {
-                    emailBody += `- ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)\n`;
+            // Add files to form data
+            if (fileInput && fileInput.files.length > 0) {
+                Array.from(fileInput.files).forEach(file => {
+                    formData.append('quoteFiles[]', file);
                 });
-                emailBody += '\nNote: Files cannot be attached directly through this form. Please attach them manually in your email client.';
             }
-
-            // Initialize EmailJS with your Public Key
-            (function() {
-                emailjs.init('ej7NeHS5Z0ZpEyyv0');
-            })();
-
-            // Send email using EmailJS
-            emailjs.send('service_rj4dm3a', 'template_9qd9dwd', {
-                name: formObject.name,
-                email: formObject.email,
-                phone: formObject.phone,
-                address: formObject.address || 'Not specified',
-                serviceType: document.querySelector('#serviceType option:checked').text,
-                projectType: document.querySelector('#projectType option:checked').text,
-                projectSize: formObject.projectSize || 'Not specified',
-                timeline: formObject.timeline ? document.querySelector('#timeline option:checked').text : 'Not specified',
-                startDate: formObject.startDate ? document.querySelector('#startDate option:checked').text : 'Not specified',
-                message: formObject.message
-            })
-            .then(function(response) {
-                // Show success message
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-message';
-                successMessage.textContent = 'Thank you for your quote request! We will contact you soon with a personalized offer.';
-                document.body.appendChild(successMessage);
-                
-                // Remove success message after 5 seconds
-                setTimeout(() => {
-                    successMessage.remove();
-                }, 5000);
-            }, function(error) {
-                // Show error message
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'error-message';
-                errorMessage.textContent = 'There was an error sending your request. Please try again or contact us directly at radu.tonu@yahoo.com';
-                document.body.appendChild(errorMessage);
-                
-                // Remove error message after 5 seconds
-                setTimeout(() => {
-                    errorMessage.remove();
-                }, 5000);
-            });
             
-            // Reset form and close modal
-            quoteForm.reset();
-            if (fileInfo) fileInfo.textContent = '';
-            selectedFiles = [];
-            closeModal();
+            // Display loading indicator
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                const response = await fetch('quote_form.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.text();
+                
+                if (result === 'success') {
+                    showNotification('Your quote request has been sent successfully! We will contact you soon.', 'success');
+                    quoteForm.reset();
+                    if (fileInfo) fileInfo.textContent = 'No file selected';
+                    selectedFiles = [];
+                    closeModal();
+                } else {
+                    throw new Error(result || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error sending request: ' + error.message, 'error');
+            } finally {
+                // Restabilește butonul
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         });
     }
 });

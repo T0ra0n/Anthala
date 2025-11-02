@@ -11,6 +11,20 @@ document.addEventListener('DOMContentLoaded', function() {
     overlay.className = 'overlay';
     document.body.appendChild(overlay);
 
+    // Notification display function
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+
     // Open modal function
     function openModal() {
         document.body.style.overflow = 'hidden';
@@ -62,114 +76,126 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // File input handling
-    const fileInput = document.getElementById('attachment');
-    const fileInfo = document.querySelector('.file-info');
-    let selectedFile = null;
+    // File input handling for contact form
+    const contactFileInput = document.getElementById('contactFiles');
+    const contactFileInfo = document.querySelector('#contactModal .file-info');
+    let contactSelectedFiles = [];
+    const maxTotalSize = 10 * 1024 * 1024; // 10MB in bytes
+    const allowedFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 
+                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                             'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                             'text/plain'];
 
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Check file size (max 5MB)
-                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                if (file.size > maxSize) {
-                    alert('File is too large. Maximum allowed size is 5MB.');
-                    fileInput.value = '';
-                    fileInfo.textContent = '';
+    if (contactFileInput) {
+        contactFileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            let totalSize = 0;
+            
+            // Reset previous selection
+            contactSelectedFiles = [];
+            
+            // Validate files
+            for (const file of files) {
+                // Check file type
+                if (!allowedFileTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|pdf|doc|docx|xls|xlsx|txt)$/i)) {
+                    showNotification(`File type not allowed: ${file.name}. Allowed types: JPG, PNG, PDF, DOC, DOCX, XLS, XLSX, TXT`, 'error');
+                    contactFileInput.value = '';
+                    contactFileInfo.textContent = '';
                     return;
                 }
                 
-                selectedFile = file;
-                fileInfo.textContent = `Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                // Check file size
+                totalSize += file.size;
+                
+                if (totalSize > maxTotalSize) {
+                    showNotification('Total file size exceeds 10MB. Please select fewer files or reduce their size.', 'error');
+                    contactFileInput.value = '';
+                    contactFileInfo.textContent = '';
+                    return;
+                }
+                
+                contactSelectedFiles.push(file);
+            }
+            
+            // Update file info display
+            if (contactSelectedFiles.length > 0) {
+                const fileNames = contactSelectedFiles.map(file => file.name).join(', ');
+                const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+                contactFileInfo.textContent = `${contactSelectedFiles.length} files selected (${totalSizeMB} MB): ${fileNames}`;
             } else {
-                selectedFile = null;
-                fileInfo.textContent = '';
+                contactFileInfo.textContent = 'No file selected';
             }
         });
     }
 
     // Form submission
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
+        contactForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Get form data
             const formData = new FormData(contactForm);
-            const formObject = {};
-            formData.forEach((value, key) => {
-                formObject[key] = value;
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Validate required fields
+            const requiredFields = ['name', 'email', 'subject', 'message'];
+            const missingFields = [];
+            
+            requiredFields.forEach(field => {
+                if (!formData.get(field)) {
+                    missingFields.push(field);
+                }
             });
-
-            // Validate form
-            if (!formObject.name || !formObject.email || !formObject.message) {
-                alert('Please fill in all required fields.');
+            
+            if (missingFields.length > 0) {
+                showNotification('Please fill in all required fields (marked with *).', 'error');
                 return;
             }
 
             // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(formObject.email)) {
-                alert('Please enter a valid email address.');
+            const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(formData.get('email'))) {
+                showNotification('Please enter a valid email address.', 'error');
                 return;
             }
-
-            // Prepare email body
-            let body = `Name: ${formObject.name}%0D%0A`;
-            body += `Email: ${formObject.email}%0D%0A`;
-            if (formObject.subject) {
-                body += `Subject: ${formObject.subject}%0D%0A`;
-            }
-            body += `%0D%0AMessage:%0D%0A${formObject.message}`;
-
-            // Add file info to the email body if a file is selected
-            if (selectedFile) {
-                body += `%0D%0A%0D%0AAttached file: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)%0D%0A`;
-                body += `Note: Files cannot be attached directly through this form. `;
-                body += `Please attach the file manually in your email client.`;
-            }
-
-            // Initialize EmailJS with your Public Key
-            (function() {
-                emailjs.init('ej7NeHS5Z0ZpEyyv0');
-            })();
-
-            // Send email using EmailJS
-            emailjs.send('service_rj4dm3a', 'template_xrirird', {
-                name: formObject.name,
-                email: formObject.email,
-                subject: formObject.subject || 'New message from website',
-                message: formObject.message
-            })
-            .then(function(response) {
-                // Show success message
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-message';
-                successMessage.textContent = 'Thank you for your message! We will get back to you soon.';
-                document.body.appendChild(successMessage);
-                
-                // Remove success message after 5 seconds
-                setTimeout(() => {
-                    successMessage.remove();
-                }, 5000);
-            }, function(error) {
-                // Show error message
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'error-message';
-                errorMessage.textContent = 'There was an error sending your message. Please try again or contact us directly at radu.tonu@yahoo.com';
-                document.body.appendChild(errorMessage);
-                
-                // Remove error message after 5 seconds
-                setTimeout(() => {
-                    errorMessage.remove();
-                }, 5000);
-            });
             
-            // Reset form and close modal
-            contactForm.reset();
-            fileInfo.textContent = '';
-            selectedFile = null;
-            closeModal();
+            // Add files to form data if any
+            if (contactFileInput && contactSelectedFiles.length > 0) {
+                contactSelectedFiles.forEach(file => {
+                    formData.append('contactFiles[]', file);
+                });
+            }
+            
+            // Display loading indicator
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                const response = await fetch('contact_form.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.text();
+                
+                if (result === 'success') {
+                    showNotification('Your message has been sent successfully! We will contact you soon.', 'success');
+                    contactForm.reset();
+                    if (contactFileInfo) contactFileInfo.textContent = 'No file selected';
+                    contactSelectedFiles = [];
+                    closeModal();
+                } else {
+                    throw new Error(result || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error sending message: ' + error.message, 'error');
+            } finally {
+                // Restabilește butonul
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         });
     }
 });

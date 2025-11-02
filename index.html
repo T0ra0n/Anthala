@@ -68,7 +68,7 @@
               </p>
             </div>
 
-            <form id="contactForm" class="contact-form">
+            <form id="contactForm" class="contact-form" method="POST" enctype="multipart/form-data">
               <h3>Send us a message</h3>
               <div class="form-group required">
                 <label for="name">Full Name <span class="required-asterisk">*</span></label>
@@ -79,17 +79,24 @@
                 <input type="email" id="email" name="email" autocomplete="email" required>
               </div>
               <div class="form-group">
-                <label for="subject">Subject</label>
-                <input type="text" id="subject" name="subject" autocomplete="off">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" name="phone" autocomplete="tel">
+              </div>
+              <div class="form-group required">
+                <label for="subject">Subject <span class="required-asterisk">*</span></label>
+                <input type="text" id="subject" name="subject" autocomplete="off" required>
               </div>
               <div class="form-group required">
                 <label for="message">Message <span class="required-asterisk">*</span></label>
                 <textarea id="message" name="message" rows="5" required></textarea>
               </div>
               <div class="form-group">
-                <label for="attachment">Attachment (max 5MB)</label>
-                <input type="file" id="attachment" name="attachment" class="file-input">
-                <div class="file-info"></div>
+                <label for="contactFiles">Attachments (max 10MB total)</label>
+                <input type="file" id="contactFiles" name="contactFiles[]" class="file-input" multiple 
+                       accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.txt" 
+                       data-max-size="10MB">
+                <div class="file-info">No file selected</div>
+                <div class="file-hint">Accepted formats: JPG, PNG, PDF, DOC, DOCX, XLS, XLSX, TXT (max 10MB total)</div>
               </div>
               <button type="submit" class="submit-btn">Send Message</button>
             </form>
@@ -101,89 +108,80 @@
             <span class="close-modal">&times;</span>
             <h2>Request a Quote</h2>
 
-            <form id="quoteForm" class="contact-form">
+            <form id="quoteForm" class="contact-form" method="POST" enctype="multipart/form-data">
               <h3>Personalized Quote Request</h3>
 
               <!-- Service Selection -->
               <div class="form-group required">
-                <label for="serviceType">Service Type <span class="required-asterisk">*</span></label>
-                <select id="serviceType" name="serviceType" required>
+                <label for="service">Service Type <span class="required-asterisk">*</span></label>
+                <select id="service" name="service" required>
                   <option value="" disabled selected>Select a service</option>
-                  <option value="renovation">INTERIOR & EXTERIOR RENOVATION</option>
-                  <option value="installations">ELECTRICAL & PLUMBING INSTALLATIONS</option>
-                  <option value="flooring">TILE, CERAMIC & PARQUET INSTALLATION</option>
-                  <option value="finishing">FINISHES & PAINTING</option>
-                  <option value="altul">Other service</option>
-                </select>
-              </div>
-
-              <!-- Project Type -->
-              <div class="form-group required">
-                <label for="projectType">Project Type <span class="required-asterisk">*</span></label>
-                <select id="projectType" name="projectType" required>
-                  <option value="" disabled selected>Select project type</option>
-                  <option value="residential">Residential (house, apartment)</option>
-                  <option value="commercial">Commercial (office, store, restaurant)</option>
-                  <option value="industrial">Industrial (warehouses, halls)</option>
+                  <option value="interior-renovation">Interior Renovation</option>
+                  <option value="exterior-renovation">Exterior Renovation</option>
+                  <option value="electrical">Electrical Installations</option>
+                  <option value="plumbing">Plumbing Installations</option>
+                  <option value="tile-ceramic">Tile & Ceramic Installation</option>
+                  <option value="parquet">Parquet Installation</option>
+                  <option value="design">Design & Planning</option>
                   <option value="other">Other</option>
                 </select>
               </div>
 
+              <!-- Project Type -->
+              <div class="form-group">
+                <label for="project_type">Project Type</label>
+                <input type="text" id="project_type" name="project_type" placeholder="E.g., Residential, Commercial, etc.">
+              </div>
+
+              <!-- Project Scope -->
+              <div class="form-group">
+                <label for="project_scope">Business Area</label>
+                <input type="text" id="project_scope" name="project_scope" placeholder="E.g., Office, Retail, Hospitality, etc.">
+              </div>
+
               <!-- Project Size -->
               <div class="form-group">
-                <label for="projectSize">Project area (m²)</label>
-                <input type="number" id="projectSize" name="projectSize" min="1" placeholder="Ex: 75">
+                <label for="project_size">Project Size (m²)</label>
+                <input type="number" id="project_size" name="project_size" min="1" placeholder="Approximate size in square meters">
               </div>
 
               <!-- Timeline -->
               <div class="form-group">
-                <label for="timeline">Desired completion time</label>
+                <label for="timeline">Estimated Timeline</label>
                 <select id="timeline" name="timeline">
-                  <option value="">Select a timeframe</option>
-                  <option value="urgent">Less than 1 month</option>
-                  <option value="1-3">1-3 months</option>
-                  <option value="3-6">3-6 months</option>
-                  <option value="6+">More than 6 months</option>
-                  <option value="flexible">I'm flexible</option>
+                  <option value="" selected>Select timeline</option>
+                  <option value="1-3 months">1-3 months</option>
+                  <option value="3-6 months">3-6 months</option>
+                  <option value="6-12 months">6-12 months</option>
+                  <option value="1+ year">1+ year</option>
                 </select>
               </div>
 
-              <!-- Start Date -->
+              <!-- Budget -->
               <div class="form-group">
-                <label for="startDate">Desired start date</label>
-                <select id="startDate" name="startDate">
-                  <option value="">When would you like to start?</option>
-                  <option value="immediate">As soon as possible</option>
-                  <option value="1month">In 1 month</option>
-                  <option value="3months">In 3 months</option>
-                  <option value="6months">In 6 months</option>
-                  <option value="flexible">I'm flexible</option>
-                  <option value="urgent">URGENT - Immediate start needed</option>
-                </select>
+                <label for="budget">Estimated Budget</label>
+                <input type="text" id="budget" name="budget" placeholder="Your budget range (optional)">
+              </div>
+
+              <!-- Contact Information -->
+              <div class="form-group required">
+                <label for="name">Full Name <span class="required-asterisk">*</span></label>
+                <input type="text" id="name" name="name" required>
               </div>
 
               <div class="form-group required">
-                <label for="quoteName">Full Name <span class="required-asterisk">*</span></label>
-                <input type="text" id="quoteName" name="name" autocomplete="name" required placeholder="Your full name" pattern=".{3,}"
-                  title="Please enter at least 3 characters">
+                <label for="email">Email <span class="required-asterisk">*</span></label>
+                <input type="email" id="email" name="email" required>
               </div>
 
               <div class="form-group required">
-                <label for="quoteEmail">Email <span class="required-asterisk">*</span></label>
-                <input type="email" id="quoteEmail" name="email" autocomplete="email" required placeholder="your@email.com"
-                  pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address">
-              </div>
-
-              <div class="form-group required">
-                <label for="quotePhone">Phone Number <span class="required-asterisk">*</span></label>
-                <input type="tel" id="quotePhone" name="phone" autocomplete="tel" required placeholder="Your phone number"
-                  pattern="[0-9]{10,}"
-                  title="Please enter a valid phone number (digits only, minimum 10)">
+                <label for="phone">Phone <span class="required-asterisk">*</span></label>
+                <input type="tel" id="phone" name="phone" required>
               </div>
 
               <div class="form-group">
-                <label for="quoteAddress">Project address</label>
-                <input type="text" id="quoteAddress" name="address" autocomplete="street-address">
+                <label for="company">Company (optional)</label>
+                <input type="text" id="company" name="company">
               </div>
 
               <div class="form-group required">
@@ -195,10 +193,12 @@
               </div>
 
               <div class="form-group">
-                <label for="quoteFiles">Attached files (plans, photos, existing quotes)</label>
-                <input type="file" id="quoteFiles" name="files" class="file-input" multiple>
-                <div class="file-info"></div>
-                <small class="file-hint">Accepted formats: JPG, PNG, PDF, DOC, DOCX, XLS, XLSX (max 10MB total)</small>
+                <label for="quoteFiles">Upload Project Files (optional)</label>
+                <input type="file" id="quoteFiles" name="quoteFiles[]" class="file-input" multiple 
+                       accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                       data-max-size="10MB">
+                <div class="file-info">No file selected</div>
+                <div class="file-hint">Accepted formats: JPG, PNG, PDF, DOC, DOCX, XLS, XLSX, TXT (max 10MB total)</div>
               </div>
 
               <div class="form-group required">
@@ -638,7 +638,7 @@
             <!-- Conținut colaboratori -->
             <div class="collaborator-content active" id="content-1">
               <p>
-                SC Construct Expert SRL is a company specialized in
+                Construct Expert Ltd is a company specialized in
                 architectural design and construction work execution, with over 15 years
                 of experience in the Romanian market.
               </p>
@@ -754,7 +754,7 @@
 
             <div class="collaborator-content" id="content-9">
               <p>
-                SC Instalații Speciale SRL offers innovative solutions for
+                Special Installations Ltd offers innovative solutions for
                 special technical installations, ensuring compliance with the
                 latest standards.
               </p>
@@ -917,7 +917,7 @@
   </footer>
 
   <!-- Scripts with defer to prevent page rendering block -->
-  <script src="fullscreen-fix.js" defer></script>
+  <script src="fullscreen.js" defer></script>
   <script src="script.js" defer></script>
   <script src="js/contact-modal.js" defer></script>
   <script src="js/quote-modal.js" defer></script>
@@ -987,6 +987,41 @@
       emailjs.init('ej7NeHS5Z0ZpEyyv0');
     })();
   </script>
-</body>
-
+  <!-- Element pentru notificări -->
+  <div id="notification" class="notification" style="display: none;"></div>
+  
+  <!-- Stiluri pentru notificări -->
+  <style>
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      border-radius: 5px;
+      color: white;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      opacity: 0;
+      transform: translateY(-20px);
+      animation: slideIn 0.3s ease-out forwards;
+      max-width: 350px;
+    }
+    
+    .notification.success {
+      background-color: #4CAF50;
+    }
+    
+    .notification.error {
+      background-color: #f44336;
+    }
+    
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+  
+  </body>
 </html>
